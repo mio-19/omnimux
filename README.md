@@ -6,7 +6,7 @@ Omnimux is a multi-tab terminal UI for local and remote tmux sessions.
 
 ## Motivation
 
-I found myself always having one tmux session on each machine, so I told an LLM to generate this specialized terminal emulator. It behaves exactly like running `tmux a || tmux` on each host (it tries to attach to an existing session first, and if one doesn't exist, it creates a new one).
+I found myself always having one tmux session on each machine, so I told an LLM to generate this specialized terminal emulator. It behaves exactly like running `tmux -u a || tmux -u` on each host (it tries to attach to an existing session first, and if one doesn't exist, it creates a new one). We explicitly add the `-u` flag to force tmux into Unicode (UTF-8) mode so that modern symbols and characters always render correctly.
 
 ## Features
 
