@@ -4,20 +4,20 @@
   inputs = {
     nurpkgs.url = "github:mio-19/nurpkgs";
     nixpkgs.follows = "nurpkgs/nixpkgs";
+    systems.url = "github:nix-systems/default";
   };
 
-  outputs = { self, nurpkgs, nixpkgs }:
+  outputs = { self, nurpkgs, nixpkgs, systems }:
     let
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+      eachSystem = nixpkgs.lib.genAttrs (import systems);
     in
     {
-      packages = forAllSystems (system: {
+      packages = eachSystem (system: {
         default = nurpkgs.packages.${system}.omnimux;
         omnimux = nurpkgs.packages.${system}.omnimux;
       });
 
-      apps = forAllSystems (system: {
+      apps = eachSystem (system: {
         default = {
           type = "app";
           program = "${nurpkgs.packages.${system}.omnimux}/bin/omnimux";
