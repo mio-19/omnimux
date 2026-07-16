@@ -49,6 +49,7 @@ jobs:
           
           mkdir -p dist/usr/share
           cp -r result/share/* dist/usr/share/
+          chmod -R u+w dist/usr/share
 
           # Create wrapper script
           mkdir -p dist/usr/bin
