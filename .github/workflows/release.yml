@@ -1,0 +1,151 @@
+name: Rolling Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-macos:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: omnimux-linux
+          - os: macos-latest
+            artifact_name: omnimux-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v25
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build with Nix
+        run: nix build .#omnimux --impure
+
+      - name: Install fpm & AppImageTool (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm
+          sudo gem install fpm
+          wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+
+      - name: Package for Linux (deb, rpm, pacman, AppImage)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist/opt/omnimux
+          cp -r result/app/omnimux/* dist/opt/omnimux/
+          
+          # Create wrapper script
+          mkdir -p dist/usr/bin
+          cat << 'EOF' > dist/usr/bin/omnimux
+          #!/bin/sh
+          exec /opt/omnimux/omnimux "$@"
+          EOF
+          chmod +x dist/usr/bin/omnimux
+
+          # Package using fpm
+          fpm -s dir -t deb -n omnimux -v 0.1.0 -C dist .
+          fpm -s dir -t rpm -n omnimux -v 0.1.0 -C dist .
+          fpm -s dir -t pacman -n omnimux -v 0.1.0 -C dist .
+
+          # Package AppImage
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+          cp -r result/app/omnimux/* AppDir/usr/bin/
+          # Create a dummy desktop file
+          cat << 'EOF' > AppDir/omnimux.desktop
+          [Desktop Entry]
+          Name=Omnimux
+          Exec=omnimux
+          Icon=omnimux
+          Type=Application
+          Categories=Utility;
+          EOF
+          cp AppDir/omnimux.desktop AppDir/usr/share/applications/
+          # Create a dummy icon (touch)
+          touch AppDir/omnimux.png
+          touch AppDir/usr/share/icons/hicolor/256x256/apps/omnimux.png
+          cat << 'EOF' > AppDir/AppRun
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          export LD_LIBRARY_PATH="${HERE}/usr/bin/lib:${LD_LIBRARY_PATH}"
+          exec "${HERE}/usr/bin/omnimux" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+          ./appimagetool AppDir omnimux-x86_64.AppImage
+
+      - name: Package for macOS (dmg)
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil create -volname Omnimux -srcfolder result/Applications/omnimux.app -ov -format UDZO omnimux-macos.dmg
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            *.deb
+            *.rpm
+            *.pkg.tar.zst
+            *.AppImage
+            *.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout nurpkgs (source)
+        run: git clone https://github.com/mio-19/nurpkgs.git source
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Windows exe
+        working-directory: source/by-name/om/omnimux/src
+        run: |
+          flutter config --enable-windows-desktop
+          flutter build windows --release
+
+      - name: Package Windows (zip)
+        working-directory: source/by-name/om/omnimux/src
+        run: |
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath omnimux-windows.zip
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnimux-windows
+          path: source/by-name/om/omnimux/src/omnimux-windows.zip
+
+  release:
+    needs: [build-linux-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Update Rolling Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rolling
+          name: Rolling Release
+          prerelease: true
+          make_latest: true
+          files: artifacts/*
