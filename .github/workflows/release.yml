@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v25
+        uses: cachix/install-nix-action@v30
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
@@ -47,6 +47,9 @@ jobs:
           cp -r result/app/omnimux/* dist/opt/omnimux/
           chmod -R u+w dist/opt/omnimux
           
+          mkdir -p dist/usr/share
+          cp -r result/share/* dist/usr/share/
+
           # Create wrapper script
           mkdir -p dist/usr/bin
           cat << 'EOF' > dist/usr/bin/omnimux
@@ -61,22 +64,12 @@ jobs:
           fpm -s dir -t pacman -n omnimux -v 0.1.0 -C dist .
 
           # Package AppImage
-          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/bin AppDir/usr/share
           cp -r result/app/omnimux/* AppDir/usr/bin/
+          cp -r result/share/* AppDir/usr/share/
           chmod -R u+w AppDir/usr/bin/
-          # Create a dummy desktop file
-          cat << 'EOF' > AppDir/omnimux.desktop
-          [Desktop Entry]
-          Name=Omnimux
-          Exec=omnimux
-          Icon=omnimux
-          Type=Application
-          Categories=Utility;
-          EOF
-          cp AppDir/omnimux.desktop AppDir/usr/share/applications/
-          # Create a dummy icon (touch)
-          touch AppDir/omnimux.png
-          touch AppDir/usr/share/icons/hicolor/256x256/apps/omnimux.png
+          cp result/share/icons/hicolor/256x256/apps/omnimux.png AppDir/omnimux.png
+          cp result/share/applications/omnimux.desktop AppDir/omnimux.desktop
           cat << 'EOF' > AppDir/AppRun
           #!/bin/sh
           HERE="$(dirname "$(readlink -f "${0}")")"
