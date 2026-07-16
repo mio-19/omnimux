@@ -1,0 +1,49 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1784115452,
+        "narHash": "sha256-BoYPdqk6jlKXy+DyUzyGV/CtRGfAhk2MmIgBhsemTGI=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "35d3407a3816f3b341d8cf1d60abaf2b7b8166ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nurpkgs": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1784192978,
+        "narHash": "sha256-ITf7+uIaYD8kKb3oc6UnKlL2NkSdH8dBuIYL6puoMrI=",
+        "owner": "mio-19",
+        "repo": "nurpkgs",
+        "rev": "4ba3d325478522ab7388dc03f47fb6eb5773b2f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mio-19",
+        "repo": "nurpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": [
+          "nurpkgs",
+          "nixpkgs"
+        ],
+        "nurpkgs": "nurpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
