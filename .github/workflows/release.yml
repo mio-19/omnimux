@@ -45,6 +45,7 @@ jobs:
         run: |
           mkdir -p dist/opt/omnimux
           cp -r result/app/omnimux/* dist/opt/omnimux/
+          chmod -R u+w dist/opt/omnimux
           
           # Create wrapper script
           mkdir -p dist/usr/bin
@@ -62,6 +63,7 @@ jobs:
           # Package AppImage
           mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
           cp -r result/app/omnimux/* AppDir/usr/bin/
+          chmod -R u+w AppDir/usr/bin/
           # Create a dummy desktop file
           cat << 'EOF' > AppDir/omnimux.desktop
           [Desktop Entry]
