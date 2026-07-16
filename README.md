@@ -6,11 +6,11 @@ Omnimux is a multi-tab terminal UI for local and remote tmux sessions.
 
 ## Motivation
 
-Find myself always have one tmux session on each machine so told llm to generate this specialized terminal emulator.
+I found myself always having one tmux session on each machine, so I told an LLM to generate this specialized terminal emulator. It behaves exactly like running `tmux a || tmux` on each host (it tries to attach to an existing session first, and if one doesn't exist, it creates a new one).
 
 ## Features
 
-This thing read ssh config to figure out hosts avaiable.
+- Automatically reads your `~/.ssh/config` file to figure out available hosts.
 
 ## Installation & Usage
 
