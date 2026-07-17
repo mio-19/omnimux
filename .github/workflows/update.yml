@@ -15,9 +15,15 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v24
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pr-title: "chore: update flake.lock"
-          pr-labels: "dependencies, automated"
+      - name: Update flake.lock and Push
+        run: |
+          nix flake update
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add flake.lock
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update flake.lock"
+            git push
+          fi
