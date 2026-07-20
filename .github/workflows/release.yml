@@ -106,7 +106,8 @@ jobs:
           exec "${HERE}/usr/bin/omnimux" "$@"
           EOF
           chmod +x AppDir/AppRun
-          ./appimagetool AppDir omnimux-x86_64.AppImage
+          # appimagetool is itself an AppImage; GHA runners have no FUSE/libfuse2.
+          APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir omnimux-x86_64.AppImage
 
       - name: Package for macOS (dmg)
         if: runner.os == 'macOS'
