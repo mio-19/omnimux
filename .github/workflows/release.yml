@@ -42,6 +42,8 @@ jobs:
 
   build-linux-macos:
     needs: [update-lock]
+    # Avoid another 6h burn if packaging hangs (macOS hdiutil has done this before).
+    timeout-minutes: 120
     strategy:
       matrix:
         include:
@@ -125,7 +127,50 @@ jobs:
       - name: Package for macOS (dmg)
         if: runner.os == 'macOS'
         run: |
-          hdiutil create -volname Omnimux -srcfolder result/Applications/Omnimux.app -ov -format UDZO omnimux-macos-aarch64.dmg
+          set -euo pipefail
+          # Never point hdiutil at the nix store: the store is read-only and
+          # Contents/MacOS/Omnimux is a symlink into it. That combination has
+          # hung hdiutil for hours on GitHub-hosted macOS runners.
+          rm -rf dmg-root
+          mkdir -p dmg-root
+          ditto result/Applications/Omnimux.app dmg-root/Omnimux.app
+          chmod -R u+w dmg-root
+
+          # write-darwin-bundle symlinks MacOS/Omnimux → $out/bin/omnimux
+          # (a makeWrapper script). Ship the real binary; fonts are already
+          # under Contents/Resources/fonts and are discovered relative to the exe.
+          rm -f dmg-root/Omnimux.app/Contents/MacOS/Omnimux
+          if [ -f result/bin/.omnimux-wrapped ]; then
+            cp result/bin/.omnimux-wrapped dmg-root/Omnimux.app/Contents/MacOS/Omnimux
+          else
+            cp -L result/bin/omnimux dmg-root/Omnimux.app/Contents/MacOS/Omnimux
+          fi
+          chmod +x dmg-root/Omnimux.app/Contents/MacOS/Omnimux
+
+          # Reduce Spotlight/XProtect contention on the staging tree.
+          touch dmg-root/.metadata_never_index
+
+          # HFS+ + retries: UDZO directly on APFS staging is flaky on GHA macOS.
+          sync
+          for attempt in 1 2 3; do
+            if hdiutil create \
+              -volname Omnimux \
+              -srcfolder dmg-root \
+              -ov \
+              -fs HFS+ \
+              -format UDZO \
+              omnimux-macos-aarch64.dmg
+            then
+              break
+            fi
+            echo "hdiutil create failed (attempt ${attempt}); retrying..."
+            rm -f omnimux-macos-aarch64.dmg
+            sync
+            sleep $((attempt * 5))
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+          done
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
