@@ -49,10 +49,13 @@ jobs:
             artifact_name: omnimux-linux-x86_64
             appimage_arch: x86_64
             appimagetool: appimagetool-x86_64.AppImage
+            appimagetool_arch: x86_64
           - os: ubuntu-24.04-arm
             artifact_name: omnimux-linux-aarch64
             appimage_arch: aarch64
             appimagetool: appimagetool-aarch64.AppImage
+            # Legacy AppImageKit only accepts arm_aarch64; maintained appimagetool uses aarch64.
+            appimagetool_arch: aarch64
           - os: macos-latest
             artifact_name: omnimux-macos-aarch64
     runs-on: ${{ matrix.os }}
@@ -77,13 +80,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm libarchive-tools
           sudo gem install fpm
-          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/${{ matrix.appimagetool }}"
+          wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/${{ matrix.appimagetool }}"
           chmod +x appimagetool
 
       - name: Package for Linux (deb, rpm, pacman, AppImage)
         if: runner.os == 'Linux'
         env:
-          APPIMAGE_ARCH: ${{ matrix.appimage_arch }}
+          APPIMAGE_ARCH: ${{ matrix.appimagetool_arch }}
         run: |
           # Current GPUI package layout: $out/bin/omnimux + $out/share/...
           mkdir -p dist/usr/bin dist/usr/share
