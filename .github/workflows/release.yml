@@ -46,9 +46,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: omnimux-linux
+            artifact_name: omnimux-linux-x86_64
+            appimage_arch: x86_64
+            appimagetool: appimagetool-x86_64.AppImage
+          - os: ubuntu-24.04-arm
+            artifact_name: omnimux-linux-aarch64
+            appimage_arch: aarch64
+            appimagetool: appimagetool-aarch64.AppImage
           - os: macos-latest
-            artifact_name: omnimux-macos
+            artifact_name: omnimux-macos-aarch64
     runs-on: ${{ matrix.os }}
     steps:
       # After schedule/dispatch lock updates, use branch tip (not the pre-push SHA).
@@ -71,11 +77,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm libarchive-tools
           sudo gem install fpm
-          wget -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/${{ matrix.appimagetool }}"
           chmod +x appimagetool
 
       - name: Package for Linux (deb, rpm, pacman, AppImage)
         if: runner.os == 'Linux'
+        env:
+          APPIMAGE_ARCH: ${{ matrix.appimage_arch }}
         run: |
           # Current GPUI package layout: $out/bin/omnimux + $out/share/...
           mkdir -p dist/usr/bin dist/usr/share
@@ -108,12 +116,13 @@ jobs:
           chmod +x AppDir/AppRun
           # appimagetool is itself an AppImage; GHA runners have no FUSE/libfuse2.
           # ARCH is required when AppDir has no usr/lib (binary-only layout).
-          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir omnimux-x86_64.AppImage
+          ARCH="$APPIMAGE_ARCH" APPIMAGE_EXTRACT_AND_RUN=1 \
+            ./appimagetool AppDir "omnimux-${APPIMAGE_ARCH}.AppImage"
 
       - name: Package for macOS (dmg)
         if: runner.os == 'macOS'
         run: |
-          hdiutil create -volname Omnimux -srcfolder result/Applications/Omnimux.app -ov -format UDZO omnimux-macos.dmg
+          hdiutil create -volname Omnimux -srcfolder result/Applications/Omnimux.app -ov -format UDZO omnimux-macos-aarch64.dmg
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -129,7 +138,16 @@ jobs:
 
   build-windows:
     needs: [update-lock]
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x86_64
+            artifact_name: omnimux-windows-x86_64
+          - os: windows-11-arm
+            arch: aarch64
+            artifact_name: omnimux-windows-aarch64
+    runs-on: ${{ matrix.os }}
     env:
       # GPUI / proc-macro expansion can overflow the default stack on Windows CI.
       RUST_MIN_STACK: 536870912
@@ -159,6 +177,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: nurpkgs/by-name/om/omnimux/src
+          key: ${{ matrix.arch }}
 
       - name: Build omnimux
         working-directory: nurpkgs/by-name/om/omnimux/src
@@ -178,15 +197,16 @@ jobs:
       - name: Package for Windows
         shell: pwsh
         run: |
+          $zip = "omnimux-windows-${{ matrix.arch }}.zip"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item nurpkgs/by-name/om/omnimux/src/target/release/omnimux.exe dist/
-          Compress-Archive -Path dist/* -DestinationPath omnimux-windows-x86_64.zip -Force
+          Compress-Archive -Path dist/* -DestinationPath $zip -Force
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: omnimux-windows
-          path: omnimux-windows-x86_64.zip
+          name: ${{ matrix.artifact_name }}
+          path: omnimux-windows-${{ matrix.arch }}.zip
           if-no-files-found: error
 
   release:
