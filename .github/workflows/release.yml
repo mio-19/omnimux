@@ -107,7 +107,8 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
           # appimagetool is itself an AppImage; GHA runners have no FUSE/libfuse2.
-          APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir omnimux-x86_64.AppImage
+          # ARCH is required when AppDir has no usr/lib (binary-only layout).
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir omnimux-x86_64.AppImage
 
       - name: Package for macOS (dmg)
         if: runner.os == 'macOS'
