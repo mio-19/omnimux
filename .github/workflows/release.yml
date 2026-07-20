@@ -127,11 +127,70 @@ jobs:
             *.dmg
           if-no-files-found: error
 
-  # Windows: omnimux is GPUI/Rust via Nix (platforms.unix). The old Flutter
-  # windows job was removed after the rewrite — no pubspec.yaml / Flutter UI.
+  build-windows:
+    needs: [update-lock]
+    runs-on: windows-latest
+    env:
+      # GPUI / proc-macro expansion can overflow the default stack on Windows CI.
+      RUST_MIN_STACK: 536870912
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.sha || 'main' }}
+
+      - name: Resolve nurpkgs revision
+        id: nurpkgs
+        shell: pwsh
+        run: |
+          $lock = Get-Content flake.lock -Raw | ConvertFrom-Json
+          $rev = $lock.nodes.nurpkgs.locked.rev
+          "rev=$rev" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mio-19/nurpkgs
+          ref: ${{ steps.nurpkgs.outputs.rev }}
+          path: nurpkgs
+          sparse-checkout: |
+            by-name/om/omnimux
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: nurpkgs/by-name/om/omnimux/src
+
+      - name: Build omnimux
+        working-directory: nurpkgs/by-name/om/omnimux/src
+        run: cargo build --release
+
+      - name: Download symbol fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/fonts
+          curl -fsSL -o /tmp/NerdFontsSymbolsOnly.zip \
+            "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/NerdFontsSymbolsOnly.zip"
+          unzip -j /tmp/NerdFontsSymbolsOnly.zip "*.ttf" -d dist/fonts
+          curl -fsSL -o dist/fonts/NotoColorEmoji.ttf \
+            "https://github.com/googlefonts/noto-emoji/raw/v2.051/fonts/NotoColorEmoji.ttf"
+
+      - name: Package for Windows
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item nurpkgs/by-name/om/omnimux/src/target/release/omnimux.exe dist/
+          Compress-Archive -Path dist/* -DestinationPath omnimux-windows-x86_64.zip -Force
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnimux-windows
+          path: omnimux-windows-x86_64.zip
+          if-no-files-found: error
 
   release:
-    needs: [build-linux-macos]
+    needs: [build-linux-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
