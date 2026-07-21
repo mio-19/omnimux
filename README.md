@@ -14,6 +14,10 @@ I found myself always having one tmux session on each machine, so I told an LLM 
 
 ## Installation & Usage
 
+### Download
+
+Pre-built packages (Linux, macOS, Windows) are published on the [rolling release](https://github.com/mio-19/omnimux/releases/tag/rolling) page.
+
 You can run Omnimux directly using Nix without installing it:
 
 ```bash
