@@ -12,10 +12,16 @@ I found myself always having one tmux session on each machine, so I told an LLM 
 
 - Automatically reads your `~/.ssh/config` file to figure out available hosts.
 
-## Keyboard & Mouse Modifiers
+## Keyboard & Mouse Shortcuts
 
+- **Ctrl/Cmd + T**: New Tab
+- **Ctrl/Cmd + W**: Close Tab
+- **Ctrl/Cmd + [ / ]**: Previous / Next Tab
+- **Ctrl/Cmd + F**: Find in Terminal
+- **Ctrl/Cmd + G / Shift+G**: Find Next / Previous
+- **Ctrl/Cmd + = / - / 0**: Zoom In / Out / Reset
 - **Ctrl + Click**: Open http(s) links in your browser (confirmation required).
-- **Shift + Click/Drag**: Bypass mouse reporting in terminal apps (like tmux, vim) to select and copy text locally via the OS clipboard.
+- **Shift or Option/Alt + Click/Drag**: Bypass mouse reporting in terminal apps (like tmux, vim) to select and copy text locally via the OS clipboard.
 
 ## Installation & Usage
 
