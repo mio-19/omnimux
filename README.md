@@ -12,6 +12,16 @@ I found myself always having one tmux session on each machine, so I told an LLM 
 
 - Automatically reads your `~/.ssh/config` file to figure out available hosts.
 
+## UTF-8 locale (zsh Tab redraw)
+
+Omnimux sets a UTF-8 locale for each session when the inherited environment is `C`/empty/POSIX (typical for macOS GUI apps). That fix runs in the local PTY env and again inside the remote startup script, because OpenSSH does not forward `LANG`/`LC_*` unless `SendEnv`/`AcceptEnv` are configured.
+
+**Why:** under a non-UTF-8 locale, zsh measures emoji and other wide glyphs by byte length (e.g. `🌐` → 4 columns) while the terminal grid uses Unicode display width (2). After Tab completion redraws the line, cursor math disagrees and you can see **ghost characters** (type `rm`, press Tab, display shows `rmrm`) even though Enter still runs the real buffer (`rm`). This shows up most often on **Mac → Mac SSH**; Linux remotes usually already get UTF-8 from pam.
+
+`tmux -u` alone is not enough — it enables tmux UTF-8 mode but does not fix the shell’s `wcwidth` / zsh `(m)` width.
+
+If you attach to an old tmux session that was started under `C`, open a new pane/window (or restart the session) so a shell inherits the corrected locale.
+
 ## Keyboard & Mouse Shortcuts
 
 - **Ctrl/Cmd + T**: New Tab
