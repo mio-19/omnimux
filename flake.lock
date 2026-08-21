@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1787111413,
-        "narHash": "sha256-93GX5Q/npwBE92xpHlktxgGztuIP/2kwOMukz+qyJBk=",
-        "rev": "afe3d8ac4395617bdcdac9f188ac8717a062e014",
+        "lastModified": 1787172299,
+        "narHash": "sha256-LS/aXgJh+/1UgtrOxdS5Wum/PgmQYa1AMFZHdH+xGyo=",
+        "rev": "07e1d92cdc0ed416cfa11ff3ca40d17e61cfba7a",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1057999.afe3d8ac4395/nixexprs.tar.xz"
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1058374.07e1d92cdc0e/nixexprs.tar.xz"
       },
       "original": {
         "type": "tarball",
@@ -18,11 +18,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1787186626,
-        "narHash": "sha256-vh4r1ymGq46H19Ra5+1IPcRFGICkSKn6e1xgGe0lCWU=",
+        "lastModified": 1787272635,
+        "narHash": "sha256-J/ZaFOgCWYh3yXRI6KiWjFeqxCq8F2LZ9ThkGk8fWdI=",
         "owner": "mio-19",
         "repo": "nurpkgs",
-        "rev": "23e8dd750ab843734d92287f9558c17537291f81",
+        "rev": "af66949a6404b92e8b14d13338bc1fb8021f6a31",
         "type": "github"
       },
       "original": {
