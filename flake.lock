@@ -18,11 +18,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1791617093,
-        "narHash": "sha256-NQF1ydkJSf07BVea/kPjUgOaYPgCXYwd5vm74tFCCHE=",
+        "lastModified": 1791700936,
+        "narHash": "sha256-FUommSxQdncdUSx0BgTr4Ykf9/bqs9B4xwkGXmTy0q4=",
         "owner": "mio-19",
         "repo": "nurpkgs",
-        "rev": "c9eafd6a8283ac84adbf2be700aa0df81c4690d7",
+        "rev": "6cd957af2cf3801be0607c0d9eba56a5003e337a",
         "type": "github"
       },
       "original": {
